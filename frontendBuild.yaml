@@ -1,0 +1,166 @@
+schema: tb
+pipeline:
+- name: 测试
+  stages:
+  - driven: AUTO
+    jobs:
+    - displayName: JavaScript 代码扫描
+      task: execution-component-production@10
+      identifier: '10_1621931244632'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: JavaScript 代码扫描
+          stepType: js_code_scan
+          stepIdentifier: '10_1621931244632__11_1621931244635'
+          USE_LOCAL_RULES: false
+          USE_LOCAL_DEPENDENCIES: false
+          EXCLUSION: |
+            test/
+            node_modules/
+            vendor/
+          CHECK_REDLINES: ''
+          freeInTaskGroupModeFields: []
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
+  - driven: AUTO
+    jobs:
+    - displayName: Node.js 单元测试
+      task: execution-component-production@10
+      identifier: '12_1621931244637'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: Node.js 单元测试
+          stepType: node-unit-test
+          stepIdentifier: '12_1621931244637__13_1621931244639'
+          TEST_REPORT_PATH: mochawesome-report
+          TEST_REPORT_INDEX: mochawesome.html
+          TEST_REPORT_FILE: mochawesome.json
+          version: '14.8'
+          command: |
+            # input your test command here
+            cnpm install && npm run test
+          CHECK_REDLINES: ''
+          freeInTaskGroupModeFields: []
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
+- name: 构建上传
+  stages:
+  - driven: AUTO
+    jobs:
+    - displayName: Node.js 构建上传 oss
+      task: execution-component-production@10
+      identifier: '14_1621931244641'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: Node.js 构建
+          stepType: node_build
+          stepIdentifier: '14_1621931244641__15_1621931244642'
+          command: cnpm install && npm run build
+          CI_RUNTIME_VERSION: 12.2
+          USE_NPM_CACHE: true
+          freeInTaskGroupModeFields: []
+        - name: 设置变量
+          stepType: set-variables
+          stepIdentifier: '14_1621931244641__10_1624867490738'
+          freeInTaskGroupModeFields: []
+          VARIABLE_NAME: RUNTIME_VER
+          VARIABLE_VALUE: 0.0.2
+        - name: OSS 上传
+          stepType: oss_ram_sc_production
+          stepIdentifier: '14_1621931244641__16_1621931244647'
+          UPLOAD_PATH: build
+          SERVICE_CONNECTION_ID: ${connectionId}
+          OSS_REGION: ${regionId}
+          OSS_BUCKET: ${ossBucket}
+          OSS_PATH: ${ossPath}
+          METAS: '[]'
+          freeInTaskGroupModeFields: [METAS]
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
+- name: 写基线
+  stages:
+  - driven: AUTO
+    jobs:
+    - displayName: 创建标签
+      task: execution-component-production@10
+      identifier: '32_1621933800366'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: 设置变量
+          stepType: set-variables
+          stepIdentifier: '32_1621933800366__10_1621935592885'
+          freeInTaskGroupModeFields: []
+          VARIABLE_NAME: RUNTIME_VER
+          VARIABLE_VALUE: 0.0.2
+        - name: 创建标签
+          stepType: git-tag
+          stepIdentifier: '32_1621933800366__33_1621933800367'
+          GIT_TAG: ${runtimeVersion}
+          freeInTaskGroupModeFields: []
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
+    - displayName: 合并代码
+      task: execution-component-production@10
+      identifier: '26_1621932684935'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: 代码合并
+          stepType: git-merge
+          stepIdentifier: '26_1621932684935__27_1621932684935'
+          GIT_BRANCH: master
+          DELETE_ORIGIN_BRANCH: true
+          DELETE_MATCHED_BRANCH: false
+          BRANCH_FILTER: ''
+          freeInTaskGroupModeFields: []
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
