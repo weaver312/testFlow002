@@ -1,0 +1,109 @@
+schema: tb
+pipeline:
+- name: 测试
+  stages:
+  - driven: AUTO
+    jobs:
+    - displayName: JavaScript 代码扫描
+      task: execution-component-production@10
+      identifier: '10_1624867297475'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: JavaScript 代码扫描
+          stepType: js_code_scan
+          stepIdentifier: '10_1624867297475__11_1624867297479'
+          USE_LOCAL_RULES: false
+          USE_LOCAL_DEPENDENCIES: false
+          EXCLUSION: |
+            test/
+            node_modules/
+            vendor/
+          CHECK_REDLINES: ''
+          freeInTaskGroupModeFields: []
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
+  - driven: AUTO
+    jobs:
+    - displayName: Node.js 单元测试
+      task: execution-component-production@10
+      identifier: '12_1624867297481'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: Node.js 单元测试
+          stepType: node-unit-test
+          stepIdentifier: '12_1624867297481__13_1624867297482'
+          TEST_REPORT_PATH: mochawesome-report
+          TEST_REPORT_INDEX: mochawesome.html
+          TEST_REPORT_FILE: mochawesome.json
+          version: '14.8'
+          command: |
+            # input your test command here
+            cnpm install && npm run test
+          CHECK_REDLINES: ''
+          freeInTaskGroupModeFields: []
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
+- name: 构建上传
+  stages:
+  - driven: AUTO
+    jobs:
+    - displayName: Node.js 构建上传 oss
+      task: execution-component-production@10
+      identifier: '14_1624867297485'
+      templateType: task
+      templateSign: ''
+      templateBatchUpdate: N
+      extraInfo: ''
+      params:
+        steps:
+        - name: Node.js 构建
+          stepType: node_build
+          stepIdentifier: '14_1624867297485__15_1624867297486'
+          command: cnpm install && npm run build
+          CI_RUNTIME_VERSION: 12.2
+          USE_NPM_CACHE: true
+          freeInTaskGroupModeFields: []
+        - name: 设置变量
+          stepType: set-variables
+          stepIdentifier: '14_1624867297485__10_1624867859234'
+          freeInTaskGroupModeFields: []
+          VARIABLE_NAME: RUNTIME_VER
+          VARIABLE_VALUE: 1.0.1
+        - name: OSS 上传
+          stepType: oss_ram_sc_production
+          stepIdentifier: '14_1624867297485__16_1624867297490'
+          UPLOAD_PATH: build
+          SERVICE_CONNECTION_ID: ${connectionId}
+          OSS_REGION: ${regionId}
+          OSS_BUCKET: ${ossBucket}
+          OSS_PATH: ${ossPath}
+          METAS: '[]'
+          freeInTaskGroupModeFields: [METAS]
+        ENGINE_PIPELINE_NAME: ${INPUTS.ENGINE_PIPELINE_NAME}
+        ENGINE_PIPELINE_ID: ${INPUTS.ENGINE_PIPELINE_ID}
+        ENGINE_PIPELINE_INST_ID: ${INPUTS.ENGINE_PIPELINE_INST_ID}
+        ENGINE_PIPELINE_INST_NUMBER: ${INPUTS.ENGINE_PIPELINE_INST_NUMBER}
+        buildNodeGroup: K8S-4
+      plugins: []
+      output: []
+      freeInTaskGroupModeFields: []
